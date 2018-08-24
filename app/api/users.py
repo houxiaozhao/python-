@@ -42,3 +42,18 @@ def update_user(id):
     setattr(user, 'username', data['username'])
     db.session.commit()
     return jsonify(user.to_dict())
+
+
+@bp.route('/users/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    if 'username' not in data or 'password' not in data:
+        return bad_request('参数错误')
+    user = User.query.filter_by(username=data['username']).first()
+    if user is None or not user.check_password(data['password']):
+        return bad_request('密码或用户名错误')
+    return jsonify({
+        "userinfo": user.to_dict(),
+        "token": user.encoded_token()
+    })
+

@@ -3,6 +3,8 @@ from app import db, login
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from flask import url_for
+import jwt
+from config import Config
 
 
 class PaginatedAPIMixin(object):
@@ -55,10 +57,16 @@ class User(UserMixin, PaginatedAPIMixin, db.Model):
         }
         return data
 
-    def from_dict(self, data):
-        for field in ['username', 'email']:
-            if field in data:
-                setattr(self, field, data[field])
+    def encoded_token(self):
+        return str(jwt.encode({
+            'id': self.id,
+            'username': self.username,
+            'exp': datetime.utcnow()
+        }, Config.SECRET_KEY,
+            algorithm='HS256'), encoding='utf8')
+
+    def decoded_token(self, token):
+        return jwt.decode(token, Config.SECRET_KEY, algorithms="HS256")
 
 
 class Post(db.Model):
