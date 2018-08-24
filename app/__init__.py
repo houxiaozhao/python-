@@ -10,4 +10,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login = LoginManager(app)
 login.login_view = 'login'  # login视图处理登陆
+from app.api import bp as api_bp
+
+app.register_blueprint(api_bp, url_prefix='/api')
 from app import routes, models
