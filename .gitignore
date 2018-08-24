@@ -1,0 +1,6 @@
+.idea
+.vscode
+
+yarn.lock
+venv
+__pycache__
