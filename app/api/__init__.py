@@ -1,4 +1,5 @@
-from flask import Blueprint
+from flask import Blueprint, g, request
+from app import app
 
 bp = Blueprint('api', __name__)
 

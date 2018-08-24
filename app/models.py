@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db, login
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from flask import url_for
+from flask import url_for, g
 import jwt
 from config import Config
+from app.api.error import bad_request
 
 
 class PaginatedAPIMixin(object):
@@ -61,12 +62,30 @@ class User(UserMixin, PaginatedAPIMixin, db.Model):
         return str(jwt.encode({
             'id': self.id,
             'username': self.username,
-            'exp': datetime.utcnow()
+            'exp': datetime.utcnow() + timedelta(days=1)  # 一天后过期
         }, Config.SECRET_KEY,
             algorithm='HS256'), encoding='utf8')
 
-    def decoded_token(self, token):
-        return jwt.decode(token, Config.SECRET_KEY, algorithms="HS256")
+    # def decoded_token(self, token):
+    #     return jwt.decode(token, Config.SECRET_KEY, algorithms="HS256")
+
+    def decoded_token(req):
+        def decorator(func):
+            def wrapper(*args, **kw):
+                print('---', req.headers['Authorization'])
+                if req.headers['Authorization']:
+                    token = req.headers['Authorization'].split(' ')[1]
+                    try:
+                        data = jwt.decode(bytes(token, encoding="utf8"), Config.SECRET_KEY, algorithms="HS256")
+                        g.state = data
+                        return func(*args, **kw)
+                    except Exception as e:
+                        print(e)
+                        return bad_request(str(e))
+
+            return wrapper
+
+        return decorator
 
 
 class Post(db.Model):

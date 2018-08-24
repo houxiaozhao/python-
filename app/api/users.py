@@ -1,5 +1,5 @@
 from app.api import bp
-from flask import jsonify, request
+from flask import jsonify, request, g
 from app.models import User
 from app.api.error import bad_request
 from app import db
@@ -44,6 +44,14 @@ def update_user(id):
     return jsonify(user.to_dict())
 
 
+@bp.route('/userinfo', methods=['GET'])
+@User.decoded_token(request)
+def get_userinfo():
+    print(g.state)  # 可以的调用者用户信息,从token中解析出来
+    user = User.query.get_or_404(g.state['id'])
+    return jsonify(user.to_dict())
+
+
 @bp.route('/users/login', methods=['POST'])
 def login():
     data = request.get_json() or {}
@@ -56,4 +64,3 @@ def login():
         "userinfo": user.to_dict(),
         "token": user.encoded_token()
     })
-
